@@ -12,7 +12,7 @@ WIDTH, HEIGHT = 450, 750
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Premium Player 2026 - All Features Unlocked")
 
-# 2. PALET WARNA
+# 2. PALET WARNA & FONT SETUP
 BG_BLACK = (14, 15, 20)
 CARD_BG = (24, 26, 36)
 NEON_PURPLE = (157, 78, 221)
@@ -21,18 +21,24 @@ WHITE = (248, 249, 250)
 GRAY_TEXT = (130, 134, 150)
 DARK_GRAY = (40, 44, 58)
 
-FONT_NAME = pygame.font.get_default_font()
-font_title = pygame.font.Font(FONT_NAME, 24)
-font_subtitle = pygame.font.Font(FONT_NAME, 16)
-font_small = pygame.font.Font(FONT_NAME, 13)
+# Menggunakan SysFont(None) agar aman secara lintas platform (Windows & Android)
+font_title = pygame.font.SysFont(None, 24)
+font_subtitle = pygame.font.SysFont(None, 16)
+font_small = pygame.font.SysFont(None, 13)
 
 # 3. DIRECTORY SETUP
-MUSIC_DIR = "musik"
-COVER_DIR = "cover"
-for f in [MUSIC_DIR, COVER_DIR]:
-    if not os.path.exists(f): os.makedirs(f)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+MUSIC_DIR = os.path.join(BASE_DIR, "musik")
+COVER_DIR = os.path.join(BASE_DIR, "cover")
 
-playlist = [file for file in os.listdir(MUSIC_DIR) if file.endswith('.mp3')]
+for f in [MUSIC_DIR, COVER_DIR]:
+    if not os.path.exists(f): 
+        os.makedirs(f)
+
+try:
+    playlist = [file for file in os.listdir(MUSIC_DIR) if file.endswith('.mp3')]
+except Exception:
+    playlist = []
 
 if not playlist:
     playlist = ["Asmalibrasi.mp3", "Fill My Sunshine.mp3", "See You Again.mp3"]
@@ -49,7 +55,7 @@ current_index = 0
 is_playing = False
 is_paused = False
 is_shuffle = False
-is_repeat = 0 # 0: Off, 1: Repeat All, 2: Repeat One
+is_repeat = 0  # 0: Off, 1: Repeat All, 2: Repeat One
 volume = 0.7
 pygame.mixer.music.set_volume(volume)
 
@@ -65,7 +71,7 @@ def get_circular_cover(song_name, size):
     
     try:
         img = pygame.image.load(path).convert_alpha()
-    except:
+    except Exception:
         img = pygame.Surface((size, size), pygame.SRCALPHA)
         img.fill(CARD_BG)
         pygame.draw.circle(img, NEON_PURPLE, (size//2, size//2), size//2 - 4, 4)
@@ -97,7 +103,7 @@ def play_song(index):
             pygame.mixer.music.play()
             is_playing = True
             is_paused = False
-        except:
+        except Exception:
             song_total_length = 180
     else:
         song_total_length = 255
@@ -114,35 +120,26 @@ def handle_auto_next():
 
 # --- FUNGSI MENGGAMBAR IKON GEOMETRI ---
 def draw_shuffle_icon(surface, color, cx, cy, size):
-    """Menggambar dua panah bersilang (Shuffle)"""
     w = size // 2
     h = size // 3
-    # Jalur Atas ke Bawah
     pygame.draw.line(surface, color, (cx - w, cy - h), (cx - w//3, cy - h), 2)
     pygame.draw.line(surface, color, (cx - w//3, cy - h), (cx + w//3, cy + h), 2)
     pygame.draw.line(surface, color, (cx + w//3, cy + h), (cx + w, cy + h), 2)
-    # Jalur Bawah ke Atas
     pygame.draw.line(surface, color, (cx - w, cy + h), (cx - w//3, cy + h), 2)
     pygame.draw.line(surface, color, (cx - w//3, cy + h), (cx + w//3, cy - h), 2)
     pygame.draw.line(surface, color, (cx + w//3, cy - h), (cx + w, cy - h), 2)
-    # Kepala Panah Atas
     pygame.draw.polygon(surface, color, [(cx + w, cy - h - 4), (cx + w, cy - h + 4), (cx + w + 5, cy - h)])
-    # Kepala Panah Bawah
     pygame.draw.polygon(surface, color, [(cx + w, cy + h - 4), (cx + w, cy + h + 4), (cx + w + 5, cy + h)])
 
 def draw_repeat_icon(surface, color, cx, cy, size, repeat_mode):
-    """Menggambar panah melingkar persegi panjang (Repeat)"""
     w = size // 2
     h = size // 3
-    # Menggambar bodi jalur memutar
     pygame.draw.lines(surface, color, False, [
         (cx - w + 4, cy), (cx - w, cy), (cx - w, cy - h), 
         (cx + w, cy - h), (cx + w, cy + h), (cx - w, cy + h), (cx - w, cy + 2)
     ], 2)
-    # Kepala panah
     pygame.draw.polygon(surface, color, [(cx - w - 4, cy + 3), (cx - w + 4, cy + 3), (cx - w, cy - 2)])
     
-    # Jika mode Repeat One, munculkan angka 1 kecil di tengahnya
     if repeat_mode == 2:
         txt = font_small.render("1", True, color)
         surface.blit(txt, (cx - txt.get_width()//2, cy - txt.get_height()//2))
@@ -182,21 +179,20 @@ while running:
         lbl = font_subtitle.render("2026 Premium Music Player", True, WHITE)
         screen.blit(lbl, (WIDTH // 2 - lbl.get_width() // 2, 40))
         
-        # Penentuan warna aktif/tidak
         s_color = NEON_BLUE if is_shuffle else GRAY_TEXT
         r_color = NEON_PURPLE if is_repeat > 0 else GRAY_TEXT
         
         shuffle_center = (150, 120)
         repeat_center = (300, 120)
         
-        # Render Lingkaran Shuffle
+        # Render Tombol Shuffle
         pygame.draw.circle(screen, CARD_BG, shuffle_center, 28)
         pygame.draw.circle(screen, s_color, shuffle_center, 26, 2)
         draw_shuffle_icon(screen, s_color, shuffle_center[0], shuffle_center[1], 20)
         txt_s = font_small.render("Shuffle", True, s_color)
         screen.blit(txt_s, (shuffle_center[0] - txt_s.get_width() // 2, shuffle_center[1] + 38))
         
-        # Render Lingkaran Repeat
+        # Render Tombol Repeat
         pygame.draw.circle(screen, CARD_BG, repeat_center, 28)
         pygame.draw.circle(screen, r_color, repeat_center, 26, 2)
         draw_repeat_icon(screen, r_color, repeat_center[0], repeat_center[1], 20, is_repeat)
@@ -205,7 +201,7 @@ while running:
         txt_r = font_small.render(lbl_rep, True, r_color)
         screen.blit(txt_r, (repeat_center[0] - txt_r.get_width() // 2, repeat_center[1] + 38))
 
-        # List Musik
+        # List Musik Utama
         lbl_recent = font_subtitle.render("Daftar Lagu Kamu", True, WHITE)
         screen.blit(lbl_recent, (30, 220))
         
@@ -231,7 +227,7 @@ while running:
             sub_t = font_small.render(sub_text, True, NEON_BLUE if current_index == i else GRAY_TEXT)
             screen.blit(sub_t, (110, y_pos + 40))
 
-        # Bottom Bar
+        # Bottom Mini Player Bar
         bottom_bar = pygame.Rect(0, HEIGHT - 85, WIDTH, 85)
         pygame.draw.rect(screen, CARD_BG, bottom_bar)
         pygame.draw.line(screen, NEON_PURPLE, (0, HEIGHT - 85), (WIDTH, HEIGHT - 85), 2)
@@ -273,7 +269,7 @@ while running:
         artist_surf = font_subtitle.render(artist_text, True, NEON_BLUE)
         screen.blit(artist_surf, (WIDTH // 2 - artist_surf.get_width() // 2, 480))
         
-        # Progress Timeline
+        # Progress Timeline Slider
         track_y = 550
         track_start_x = 40
         track_width = WIDTH - 80
@@ -289,7 +285,7 @@ while running:
         screen.blit(font_small.render(format_time(current_pos_seconds), True, GRAY_TEXT), (40, track_y + 14))
         screen.blit(font_small.render(format_time(song_total_length), True, GRAY_TEXT), (WIDTH - 40 - font_small.size(format_time(song_total_length))[0], track_y + 14))
         
-        # Volume Bar
+        # Volume Bar Slider
         vol_x, vol_y, vol_w, vol_h = WIDTH - 30, 160, 6, 120
         vol_rect_area = pygame.Rect(vol_x - 10, vol_y, 25, vol_h)
         pygame.draw.rect(screen, DARK_GRAY, (vol_x, vol_y, vol_w, vol_h), border_radius=3)
@@ -297,7 +293,7 @@ while running:
         pygame.draw.rect(screen, NEON_BLUE, (vol_x, vol_y + (vol_h - current_vol_h), vol_w, current_vol_h), border_radius=3)
         pygame.draw.circle(screen, WHITE, (vol_x + 3, vol_y + (vol_h - current_vol_h)), 6)
         
-        # Tombol Kontrol
+        # Tombol Kontrol Musik (Prev, Play/Pause, Next)
         prev_rect = pygame.Rect(WIDTH // 2 - 100, 620, 40, 40)
         p_color = NEON_BLUE if prev_rect.collidepoint(mouse_pos) else WHITE
         draw_next_icon(screen, p_color, prev_rect.centerx, prev_rect.centery, 18, flip=True)
@@ -315,7 +311,7 @@ while running:
         draw_next_icon(screen, n_color, next_rect.centerx, next_rect.centery, 18, flip=False)
 
     # -------------------------------------------------------------
-    # 7. EVENT HANDLING
+    # 7. EVENT HANDLING LOOP
     # -------------------------------------------------------------
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -329,11 +325,10 @@ while running:
                     
         elif event.type == pygame.MOUSEBUTTONDOWN:
             if event.button == 1:
+                # Event Klik Pada Tampilan Home
                 if current_view == VIEW_HOME:
-                    # Deteksi Klik Menu Shuffle
                     if math.hypot(event.pos[0] - shuffle_center[0], event.pos[1] - shuffle_center[1]) < 28:
                         is_shuffle = not is_shuffle
-                    # Deteksi Klik Menu Repeat
                     if math.hypot(event.pos[0] - repeat_center[0], event.pos[1] - repeat_center[1]) < 28:
                         is_repeat = (is_repeat + 1) % 3
                         
@@ -344,14 +339,19 @@ while running:
                     if open_btn.collidepoint(event.pos):
                         current_view = VIEW_PLAYER
                         
+                # Event Klik Pada Tampilan Player
                 elif current_view == VIEW_PLAYER:
                     if back_btn.collidepoint(event.pos):
                         current_view = VIEW_HOME
                         
                     if math.hypot(event.pos[0] - play_center[0], event.pos[1] - play_center[1]) < 35:
                         if is_playing:
-                            if is_paused: pygame.mixer.music.unpause(); is_paused = False
-                            else: pygame.mixer.music.pause(); is_paused = True
+                            if is_paused: 
+                                pygame.mixer.music.unpause()
+                                is_paused = False
+                            else: 
+                                pygame.mixer.music.pause()
+                                is_paused = True
                         else:
                             play_song(current_index)
                             
@@ -360,14 +360,19 @@ while running:
                     if prev_rect.collidepoint(event.pos):
                         play_song((current_index - 1) % len(playlist))
                         
+                    # Deteksi Klik & Seek Timeline Lagu
                     if track_rect_area.collidepoint(event.pos):
                         clicked_x = event.pos[0] - track_start_x
                         new_ratio = clicked_x / track_width
                         new_ratio = max(0.0, min(1.0, new_ratio))
                         current_pos_seconds = int(new_ratio * song_total_length)
                         if not USING_DUMMY and is_playing:
-                            pygame.mixer.music.set_pos(current_pos_seconds)
+                            try:
+                                pygame.mixer.music.set_pos(current_pos_seconds)
+                            except Exception:
+                                pass
                             
+                    # Deteksi Klik Volume Bar
                     if vol_rect_area.collidepoint(event.pos):
                         clicked_y = event.pos[1] - vol_y
                         vol_ratio = 1.0 - (clicked_y / vol_h)
