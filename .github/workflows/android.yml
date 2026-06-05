@@ -3,6 +3,10 @@ name: Build Android APK
 on:
   workflow_dispatch:
 
+env:
+  # Memaksa runner menggunakan runtime Node.js terbaru agar tidak diblokir GitHub
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   build:
     runs-on: ubuntu-22.04
@@ -14,16 +18,14 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.10'
+          python-version: '3.11'
 
-      # Langkah krusial: Memasang Java JDK 17 yang diwajibkan oleh Buildozer modern
       - name: Setup Java JDK
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
 
-      # Menginstal dependensi sistem Ubuntu yang bersih dan esensial saja
       - name: Install System Dependencies
         run: |
           sudo apt-get update
@@ -34,21 +36,21 @@ jobs:
             libgstreamer1.0-dev gstreamer1.0-plugins-base gstreamer1.0-plugins-good \
             libsqlite3-dev libffi-dev libssl-dev python3-setuptools autoconf libtool
           pip install --upgrade pip
-          pip install cython==0.29.36 buildozer
+          # Memasang Buildozer versi stabil untuk Python 3.11
+          pip install cython buildozer
 
       - name: Build APK with Buildozer
         run: |
-          # Menghapus berkas konfigurasi lama agar tidak konflik
           rm -f buildozer.spec
           buildozer init
           
-          # Pengaturan otomatis file buildozer.spec
+          # Injeksi konfigurasi aplikasi musik ke buildozer.spec
           sed -i 's/^requirements =.*/requirements = python3,pygame,mutagen/g' buildozer.spec
           sed -i 's/^source.include_exts =.*/source.include_exts = py,png,jpg,mp3,ttf/g' buildozer.spec
           sed -i 's/#android.permissions =.*/android.permissions = READ_EXTERNAL_STORAGE,WRITE_EXTERNAL_STORAGE/g' buildozer.spec
           sed -i 's/^orientation =.*/orientation = portrait/g' buildozer.spec
           
-          # Eksekusi perakitan Android APK secara otomatis
+          # Jalankan kompilasi
           buildozer android debug
 
       - name: Upload APK Artifact
