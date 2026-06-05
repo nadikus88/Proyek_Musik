@@ -33,7 +33,7 @@ jobs:
           rm -f buildozer.spec
           buildozer init
           
-          # Konfigurasi otomatis spesifikasi Buildozer
+          # Konfigurasi otomatis file buildozer.spec
           sed -i 's/^requirements =.*/requirements = python3,pygame,mutagen/g' buildozer.spec
           sed -i 's/^source.include_exts =.*/source.include_exts = py,png,jpg,mp3,ttf/g' buildozer.spec
           sed -i 's/#android.permissions =.*/android.permissions = READ_EXTERNAL_STORAGE,WRITE_EXTERNAL_STORAGE/g' buildozer.spec
