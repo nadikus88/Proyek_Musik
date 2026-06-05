@@ -30,29 +30,15 @@ jobs:
 
       - name: Build APK with Buildozer
         run: |
-          # 1. Hapus buildozer.spec lama jika ada yang corrupt/salah konfigurasi
           rm -f buildozer.spec
-          
-          # 2. Inisialisasi ulang konfigurasi Buildozer yang bersih
           buildozer init
           
-          # 3. Sesuaikan nama aplikasi dan paket (Opsional, agar lebih rapi)
-          sed -i 's/^title =.*/title = Premium Player 2026/g' buildozer.spec
-          sed -i 's/^package.name =.*/package.name = premiumplayer/g' buildozer.spec
-          
-          # 4. Tambahkan requirements wajib: python3, pygame, dan mutagen
+          # Konfigurasi otomatis spesifikasi Buildozer
           sed -i 's/^requirements =.*/requirements = python3,pygame,mutagen/g' buildozer.spec
-          
-          # 5. Pastikan semua file aset musik (.mp3) dan gambar (.png) ikut dibungkus
           sed -i 's/^source.include_exts =.*/source.include_exts = py,png,jpg,mp3,ttf/g' buildozer.spec
-          
-          # 6. Berikan izin akses penyimpanan file di Android
           sed -i 's/#android.permissions =.*/android.permissions = READ_EXTERNAL_STORAGE,WRITE_EXTERNAL_STORAGE/g' buildozer.spec
-          
-          # 7. Kunci orientasi aplikasi menjadi Portrait (Tegak)
           sed -i 's/^orientation =.*/orientation = portrait/g' buildozer.spec
           
-          # 8. Mulai proses kompilasi ke APK (Proses ini memakan waktu sekitar 10-15 menit)
           buildozer android debug
 
       - name: Upload APK Artifact
