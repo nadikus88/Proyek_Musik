@@ -1,0 +1,45 @@
+name: Build Android APK
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-node-version: '3.10'
+
+    - name: Install Buildozer Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential git ffmpeg libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev libportmidi-dev libswscale-dev libavformat-dev libavcodec-dev zlib1g-dev openjdk-17-jdk unzip aidl cc_cache
+        pip install --upgrade pip
+        pip install buildozer cython==0.29.33 mutagen
+
+    - name: Generate Buildozer Config
+      run: |
+        buildozer init
+        # Otomatisasi edit file buildozer.spec via script sed
+        sed -i 's/^title =.*/title = Premium Player/' buildozer.spec
+        sed -i 's/^package.name =.*/package.name = premiumplayer/' buildozer.spec
+        sed -i 's/^requirements =.*/requirements = python3,pygame,mutagen/' buildozer.spec
+        sed -i 's/^source.include_exts =.*/source.include_exts = py,png,jpg,mp3/' buildozer.spec
+        sed -i 's/#android.permissions =.*/android.permissions = INTERNET/' buildozer.spec
+
+    - name: Build APK with Buildozer
+      run: |
+        export BUILDOZER_WARN_ON_ROOT=0
+        buildozer -v android debug
+
+    - name: Upload APK Artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: Premium-Music-Player-APK
+        path: bin/*.apk
